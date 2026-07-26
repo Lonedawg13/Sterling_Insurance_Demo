@@ -363,9 +363,9 @@
           <span class="status-pill"><span class="dot"></span> Available</span>
           <span class="clock" id="clock">--:--:--</span>
           <div class="advisor">
-            <div class="advisor-avatar">RP</div>
+            <div class="advisor-avatar">RS</div>
             <div>
-              <div class="advisor-name">Rachael Pillai</div>
+              <div class="advisor-name">Richard Simpson</div>
               <div class="advisor-role">Senior Advisor · Tier 2</div>
             </div>
           </div>
@@ -406,9 +406,9 @@
           <div class="nav-footer">
             <div class="queue-card">
               <h4>Today's Queue</h4>
-              <div class="queue-stat"><span class="v">7</span><span class="l">handled</span></div>
-              <div class="queue-stat"><span class="v">2</span><span class="l">in queue</span></div>
-              <div class="queue-bar"><span style="width:78%"></span></div>
+              <div class="queue-stat"><span class="v">13</span><span class="l">handled</span></div>
+              <div class="queue-stat"><span class="v">23</span><span class="l">in queue</span></div>
+              <div class="queue-bar"><span style="width:36%"></span></div>
               <div style="font-size:10px;color:var(--navy-400);margin-top:7px;">Avg handle 6m 12s</div>
             </div>
           </div>
@@ -451,7 +451,7 @@
                 Live Conversation Transcript
               </h2>
               <div class="tools">
-                <span class="live-tag"><span class="dot"></span> Live · 04:18</span>
+                <span class="live-tag"><span class="dot"></span> Live · <span id="callTimer">00:00</span></span>
                 <button class="icon-btn" title="Pause"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg></button>
                 <button class="icon-btn" title="Transfer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4v3h8.5a2.5 2.5 0 0 1 0 5H8"/><path d="m12 16-4 4 4 4"/><path d="M19 20v-3h-8.5a2.5 2.5 0 0 1 0-5H16"/></svg></button>
               </div>
@@ -476,9 +476,9 @@
               </div>
 
               <div class="msg agent">
-                <div class="av">RP</div>
+                <div class="av">RS</div>
                 <div class="body">
-                  <div class="row"><span class="who">Rachael (Advisor)</span><span class="time">10:42:39</span></div>
+                  <div class="row"><span class="who">Richard (Advisor)</span><span class="time">10:42:39</span></div>
                   <div class="bubble">I'm really sorry to hear that, Mr Kohli — glad you're okay. Let's get this logged for you straight away. Was anyone else in the vehicle with you, and were there any injuries at all?</div>
                 </div>
               </div>
@@ -500,9 +500,9 @@
               </div>
 
               <div class="msg agent">
-                <div class="av">RP</div>
+                <div class="av">RS</div>
                 <div class="body">
-                  <div class="row"><span class="who">Rachael (Advisor)</span><span class="time">10:43:21</span></div>
+                  <div class="row"><span class="who">Richard (Advisor)</span><span class="time">10:43:21</span></div>
                   <div class="bubble">That's helpful, thank you. Could you share the other driver's name and registration for me? And do you have any photos of the damage you could upload through the app?</div>
                 </div>
               </div>
@@ -672,7 +672,7 @@ Next steps:
 If you have any questions, just reply to this email or call us on 0800 123 4567 — we're here 24/7.
 
 Kind regards,
-Rachael Pillai
+Richard Simpson
 Senior Advisor, Sterling Insurance Group</div>
                 <div class="email-actions">
                   <button class="btn primary">Send</button>
@@ -708,6 +708,20 @@ Senior Advisor, Sterling Insurance Group</div>
         document.getElementById('clock').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
       }
       tick(); setInterval(tick, 1000);
+
+      // Live call timer — counts up from when the page loads (call started at 04:18)
+      (function () {
+        var callTimerEl = document.getElementById('callTimer');
+        var startSeconds = 4 * 60 + 18; // matches the transcript's elapsed time
+        var p = function (n) { return String(n).padStart(2, '0'); };
+        function updateTimer() {
+          startSeconds++;
+          var m = Math.floor(startSeconds / 60);
+          var s = startSeconds % 60;
+          callTimerEl.textContent = p(m) + ':' + p(s);
+        }
+        setInterval(updateTimer, 1000);
+      })();
 
       // AI Assistant task feed — reveal one completed task every 2 seconds
       (function () {
@@ -751,9 +765,9 @@ Senior Advisor, Sterling Insurance Group</div>
         var node = document.createElement('div');
         node.className = 'msg agent';
         node.innerHTML =
-          '<div class="av">RP</div>' +
+          '<div class="av">RS</div>' +
           '<div class="body">' +
-          '<div class="row"><span class="who">Rachael (Advisor)</span><span class="time">' + new Date().toLocaleTimeString('en-GB') + '</span></div>' +
+          '<div class="row"><span class="who">Richard (Advisor)</span><span class="time">' + new Date().toLocaleTimeString('en-GB') + '</span></div>' +
           '<div class="bubble">' + text.replace(/</g, '&lt;') + '</div>' +
           '</div>';
         transcript.insertBefore(node, typingMsg);
