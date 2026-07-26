@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speak with Claire — AI Assistant | Sterling Insurance Group</title>
+    <meta name="description" content="You're about to speak with Claire, our AI Assistant. Ask questions, check policies, start claims and get connected to a specialist when needed." />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --navy-700: #162d4a;
+        --navy-800: #0f1f37;
+        --navy-900: #0a1628;
+        --navy-950: #060f1e;
+        --teal-300: #73d6c7;
+        --teal-400: #3fbcae;
+        --teal-500: #22a093;
+        --blue: #3b82f6;
+        --blue-glow: #60a5fa;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; height: 100%; }
+      body {
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background: var(--navy-950);
+        color: #fff;
+        min-height: 100vh;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        position: relative;
+      }
+      .display { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; }
+
+      /* Animated gradient backdrop */
+      .backdrop {
+        position: fixed; inset: 0; z-index: 0; overflow: hidden;
+        background:
+          radial-gradient(120% 80% at 50% -10%, rgba(34,160,147,0.18), transparent 60%),
+          radial-gradient(100% 70% at 100% 100%, rgba(59,130,246,0.16), transparent 55%),
+          radial-gradient(90% 60% at 0% 100%, rgba(22,45,74,0.6), transparent 50%),
+          linear-gradient(180deg, #060f1e 0%, #0a1628 50%, #0f1f37 100%);
+      }
+      .blob {
+        position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5;
+        mix-blend-mode: screen;
+        animation: drift 18s ease-in-out infinite;
+      }
+      .blob.b1 { width: 520px; height: 520px; background: radial-gradient(circle, #22a093, transparent 70%); top: -120px; left: -80px; }
+      .blob.b2 { width: 600px; height: 600px; background: radial-gradient(circle, #3b82f6, transparent 70%); bottom: -160px; right: -120px; animation-delay: -6s; animation-duration: 22s; }
+      .blob.b3 { width: 420px; height: 420px; background: radial-gradient(circle, #73d6c7, transparent 70%); top: 40%; left: 55%; animation-delay: -11s; animation-duration: 26s; opacity: 0.35; }
+      @keyframes drift {
+        0%,100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(40px,-30px) scale(1.08); }
+        66% { transform: translate(-30px,20px) scale(0.95); }
+      }
+      .grain {
+        position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      /* Top bar */
+      .topbar {
+        position: relative; z-index: 10;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 22px 28px;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; }
+      .brand-mark {
+        height: 44px; width: 44px; border-radius: 13px;
+        background: linear-gradient(135deg, var(--navy-700), var(--navy-800));
+        display: grid; place-items: center;
+        box-shadow: 0 8px 24px -8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+      }
+      .brand-mark svg { color: var(--teal-300); }
+      .brand-name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+      .brand-sub { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--teal-400); }
+      .back-link {
+        display: inline-flex; align-items: center; gap: 7px;
+        font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);
+        text-decoration: none; padding: 9px 16px; border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+        transition: all .25s;
+      }
+      .back-link:hover { color: #fff; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+
+      /* Center stage */
+      .stage {
+        position: relative; z-index: 5;
+        min-height: calc(100vh - 110px);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 40px 24px 80px;
+      }
+
+      .badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 7px 16px; border-radius: 999px;
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+        font-size: 12px; font-weight: 600; color: var(--teal-300);
+        letter-spacing: 0.02em;
+        animation: fadeUp .8s ease-out both;
+      }
+      .badge .pip { height: 7px; width: 7px; border-radius: 50%; background: var(--teal-400); box-shadow: 0 0 0 4px rgba(34,160,147,0.18); }
+
+      /* Microphone */
+      .mic-wrap {
+        position: relative; margin: 40px 0 36px;
+        animation: fadeUp .9s .1s ease-out both;
+      }
+      .mic-rings { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+      .ring {
+        position: absolute; border-radius: 50%;
+        border: 1px solid rgba(115,214,199,0.35);
+        animation: pulse 3s ease-out infinite;
+      }
+      .ring.r1 { width: 220px; height: 220px; animation-delay: 0s; }
+      .ring.r2 { width: 220px; height: 220px; animation-delay: 1s; border-color: rgba(96,165,250,0.3); }
+      .ring.r3 { width: 220px; height: 220px; animation-delay: 2s; border-color: rgba(115,214,199,0.25); }
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.7; }
+        100% { transform: scale(2.2); opacity: 0; }
+      }
+      .mic {
+        position: relative; z-index: 2;
+        height: 220px; width: 220px; border-radius: 50%;
+        display: grid; place-items: center;
+        background:
+          radial-gradient(circle at 30% 30%, rgba(96,165,250,0.35), transparent 60%),
+          linear-gradient(160deg, #162d4a, #0a1628);
+        box-shadow:
+          0 0 0 1px rgba(115,214,199,0.25),
+          0 0 60px rgba(59,130,246,0.35),
+          0 0 120px rgba(34,160,147,0.25),
+          inset 0 2px 0 rgba(255,255,255,0.08),
+          inset 0 -20px 40px rgba(0,0,0,0.4);
+        animation: breathe 4s ease-in-out infinite;
+      }
+      @keyframes breathe {
+        0%,100% { box-shadow: 0 0 0 1px rgba(115,214,199,0.25), 0 0 60px rgba(59,130,246,0.35), 0 0 120px rgba(34,160,147,0.25), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -20px 40px rgba(0,0,0,0.4); }
+        50% { box-shadow: 0 0 0 1px rgba(115,214,199,0.4), 0 0 90px rgba(59,130,246,0.5), 0 0 160px rgba(34,160,147,0.35), inset 0 2px 0 rgba(255,255,255,0.12), inset 0 -20px 40px rgba(0,0,0,0.4); }
+      }
+      .mic svg { color: var(--teal-300); filter: drop-shadow(0 0 12px rgba(115,214,199,0.6)); }
+
+      .heading {
+        font-size: clamp(28px, 4.5vw, 46px);
+        font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+        max-width: 720px; margin: 0;
+        animation: fadeUp 1s .2s ease-out both;
+      }
+      .heading .accent { color: var(--teal-300); }
+      .sub {
+        margin: 22px auto 0; max-width: 580px;
+        font-size: 18px; line-height: 1.6; color: rgba(255,255,255,0.72);
+        animation: fadeUp 1s .3s ease-out both;
+      }
+
+      .cta-wrap { margin-top: 44px; animation: fadeUp 1s .4s ease-out both; }
+      .cta {
+        position: relative;
+        display: inline-flex; align-items: center; gap: 12px;
+        padding: 20px 44px; border-radius: 999px;
+        font-family: inherit; font-size: 18px; font-weight: 700; letter-spacing: 0.01em;
+        color: #06121f; cursor: pointer; border: none;
+        background: linear-gradient(135deg, #60a5fa, #3b82f6 55%, #2563eb);
+        box-shadow:
+          0 0 0 1px rgba(96,165,250,0.5),
+          0 10px 30px -6px rgba(59,130,246,0.6),
+          0 0 60px rgba(59,130,246,0.45);
+        transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+        overflow: hidden;
+      }
+      .cta::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        background: linear-gradient(135deg, rgba(255,255,255,0.4), transparent 50%);
+        opacity: 0; transition: opacity .25s;
+      }
+      .cta:hover { transform: translateY(-2px); filter: brightness(1.05);
+        box-shadow: 0 0 0 1px rgba(96,165,250,0.7), 0 16px 40px -6px rgba(59,130,246,0.75), 0 0 90px rgba(59,130,246,0.55); }
+      .cta:hover::before { opacity: 1; }
+      .cta:active { transform: translateY(0); }
+      .cta .sheen {
+        position: absolute; top: 0; left: -120%; height: 100%; width: 60%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+        transform: skewX(-20deg); animation: sheen 3.5s ease-in-out infinite;
+      }
+      @keyframes sheen { 0%,100% { left: -120%; } 50% { left: 140%; } }
+
+      .footnote {
+        margin-top: 26px; font-size: 13px; color: rgba(255,255,255,0.4);
+        animation: fadeUp 1s .5s ease-out both;
+      }
+
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+
+      @media (max-width: 600px) {
+        .topbar { padding: 16px 18px; }
+        .brand-sub { display: none; }
+        .mic, .ring.r1, .ring.r2, .ring.r3 { width: 180px; height: 180px; }
+        .cta { padding: 18px 34px; font-size: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="Sterling Insurance Group — home">
+        <span class="brand-mark">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <span>
+          <span class="brand-name display">Sterling Insurance</span><br />
+          <span class="brand-sub">Group</span>
+        </span>
+      </a>
+      <a class="back-link" href="./index.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Back to site
+      </a>
+    </header>
+
+    <main class="stage">
+      <span class="badge"><span class="pip"></span> AI Voice Assistant</span>
+
+      <div class="mic-wrap">
+        <div class="mic-rings" aria-hidden="true">
+          <span class="ring r1"></span>
+          <span class="ring r2"></span>
+          <span class="ring r3"></span>
+        </div>
+        <div class="mic" role="img" aria-label="Microphone">
+          <svg xmlns="http://www.w3.org/2000/svg" width="74" height="74" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="heading display">
+        You&apos;re about to speak with <span class="accent">Claire</span>,<br />our AI Assistant
+      </h1>
+      <p class="sub">
+        Our AI can answer questions, check policies, start claims and connect you to a specialist when required.
+      </p>
+
+      <div class="cta-wrap">
+        <a
+          class="cta"
+          id="startBtn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Start conversation with Claire"
+        >
+          <span class="sheen" aria-hidden="true"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          Start Conversation
+        </a>
+      </div>
+
+      <p class="footnote">Voice calls are recorded for training and quality purposes.</p>
+    </main>
+
+    <script>
+      // Replace this placeholder with your ElevenLabs conversational AI URL.
+      // It will typically look like: https://convai.elevenlabs.io/...
+      var ELEVENLABS_URL = "https://elevenlabs.io/app/agents/agents/agent_4601kycxb9zvfxnbqvs5d32ssm9j/preview?include_draft=true&branchId=agtbrch_7601kycxbbq7fwxtvs880brmhvtm";
+      document.getElementById('startBtn').setAttribute('href', ELEVENLABS_URL);
+    </script>
+  </body>
+</html>
