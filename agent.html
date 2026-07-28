@@ -199,10 +199,11 @@
 
       .transcript { overflow-y: auto; padding: 18px 22px; }
       .msg { display: flex; gap: 11px; margin-bottom: 16px; animation: rise .35s ease-out both; }
-      /* Looping transcript reveal */
-      .msg.seq { animation: none; opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease; }
-      .msg.seq.shown { opacity: 1; transform: none; }
-      .transcript { scroll-behavior: smooth; }
+      /* Subtle fade at the top/bottom edges so the auto-scroll feels continuous */
+      .transcript {
+        -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
+        mask-image: linear-gradient(180deg, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
+      }
       .msg .av {
         height: 32px; width: 32px; border-radius: 9px; flex: none; display: grid; place-items: center;
         font-size: 11px; font-weight: 700; color: #fff;
@@ -834,42 +835,46 @@ Senior Advisor, Sterling Insurance Group</div>
         transcript.scrollTop = transcript.scrollHeight;
       });
 
-      // Live transcript — fade messages in one by one so the call appears to be unfolding, then loop
+      // Live transcript — slow continuous auto-scroll that loops back to the top
       (function () {
-        var msgs = Array.prototype.slice.call(transcript.querySelectorAll('.msg'));
-        if (!msgs.length) return;
-
-        msgs.forEach(function (m) { m.classList.add('seq'); });
-
-        var j = 0;
         var paused = false;
+        var pos = 0;
+        var SPEED = 0.35; // pixels per frame — slow, cinematic drift
 
-        // Pause the loop while the advisor is typing a note, resume shortly after
+        // Don't fight the user: pause on hover, manual scroll, or while typing a note
+        transcript.addEventListener('mouseenter', function () { paused = true; });
+        transcript.addEventListener('mouseleave', function () { pos = transcript.scrollTop; paused = false; });
+        transcript.addEventListener('wheel', function () {
+          paused = true;
+          clearTimeout(transcript._resumeT);
+          transcript._resumeT = setTimeout(function () { pos = transcript.scrollTop; paused = false; }, 3000);
+        });
         input.addEventListener('focus', function () { paused = true; });
-        input.addEventListener('blur', function () { setTimeout(function () { paused = false; }, 1500); });
+        input.addEventListener('blur', function () {
+          setTimeout(function () { pos = transcript.scrollTop; paused = false; }, 1500);
+        });
 
-        function showNext() {
-          if (paused) { setTimeout(showNext, 1500); return; }
+        function step() {
+          var max = transcript.scrollHeight - transcript.clientHeight;
 
-          if (j >= msgs.length) {
-            setTimeout(function () {
-              if (paused) { setTimeout(showNext, 1500); return; }
-              msgs.forEach(function (m) { m.classList.remove('shown'); });
-              transcript.scrollTop = 0;
-              j = 0;
-              setTimeout(showNext, 1000);
-            }, 4000); // hold the full conversation on screen before replaying
-            return;
+          if (!paused && max > 4) {
+            pos += SPEED;
+            if (pos >= max) {
+              // Reached the end — hold briefly, then glide back to the top
+              paused = true;
+              setTimeout(function () {
+                transcript.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(function () { pos = 0; paused = false; }, 1200);
+              }, 2500);
+            } else {
+              transcript.scrollTop = pos;
+            }
           }
-
-          msgs[j].classList.add('shown');
-          j++;
-          // keep the newest message in view
-          transcript.scrollTop = transcript.scrollHeight;
-          setTimeout(showNext, 2200);
+          requestAnimationFrame(step);
         }
 
-        setTimeout(showNext, 500);
+        pos = transcript.scrollTop;
+        requestAnimationFrame(step);
       })();
     </script>
   </body>
