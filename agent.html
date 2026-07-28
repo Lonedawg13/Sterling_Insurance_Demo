@@ -81,6 +81,8 @@
         background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
       }
       .status-pill .dot { height: 6px; width: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(16,185,129,0.18); animation: blink 2s infinite; }
+      .status-pill.busy { color: var(--red); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+      .status-pill.busy .dot { background: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,0.18); }
       .clock { font-size: 12px; color: var(--navy-200); font-variant-numeric: tabular-nums; }
       .advisor { display: flex; align-items: center; gap: 9px; }
       .advisor-avatar {
@@ -197,6 +199,10 @@
 
       .transcript { overflow-y: auto; padding: 18px 22px; }
       .msg { display: flex; gap: 11px; margin-bottom: 16px; animation: rise .35s ease-out both; }
+      /* Looping transcript reveal */
+      .msg.seq { animation: none; opacity: 0; transform: translateY(14px); transition: opacity .7s ease, transform .7s ease; }
+      .msg.seq.shown { opacity: 1; transform: none; }
+      .transcript { scroll-behavior: smooth; }
       .msg .av {
         height: 32px; width: 32px; border-radius: 9px; flex: none; display: grid; place-items: center;
         font-size: 11px; font-weight: 700; color: #fff;
@@ -252,7 +258,8 @@
       .metric .l { font-size: 11px; color: var(--navy-300); }
       .metric .v { font-size: 12px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; gap: 6px; }
       .meter { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 4px; }
-      .meter > span { display: block; height: 100%; border-radius: 4px; }
+      .meter > span { display: block; height: 100%; border-radius: 4px; transition: width 1.6s cubic-bezier(.4,0,.2,1); }
+      .metric .v { transition: color .6s ease, opacity .5s ease; }
 
       .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
       .tag-row .t {
@@ -360,7 +367,7 @@
           <span class="crumb">Service &nbsp;›&nbsp; <b>Active Interaction</b></span>
         </div>
         <div class="topbar-right">
-          <span class="status-pill"><span class="dot"></span> Available</span>
+          <span class="status-pill busy"><span class="dot"></span> Busy</span>
           <span class="clock" id="clock">--:--:--</span>
           <div class="advisor">
             <div class="advisor-avatar">RS</div>
@@ -589,14 +596,14 @@
             <div class="card-h"><span class="t"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Live Analysis</span><span class="pill" style="background:rgba(16,185,129,0.15);color:var(--green);">Real-time</span></div>
             <div class="card-b">
               <div class="metric"><span class="l">Intent</span><span class="v">Report accident</span></div>
-              <div class="metric"><span class="l">Confidence</span><span class="v">94%</span></div>
-              <div class="meter"><span style="width:94%;background:linear-gradient(90deg,var(--teal-400),var(--teal-500));"></span></div>
+              <div class="metric"><span class="l">Confidence</span><span class="v" id="confVal">94%</span></div>
+              <div class="meter"><span id="confBar" style="width:94%;background:linear-gradient(90deg,var(--teal-400),var(--teal-500));"></span></div>
 
-              <div class="metric" style="margin-top:14px;"><span class="l">Sentiment</span><span class="v" style="color:var(--amber);">Anxious · improving</span></div>
-              <div class="meter"><span style="width:62%;background:linear-gradient(90deg,#f59e0b,#fbbf24);"></span></div>
+              <div class="metric" style="margin-top:14px;"><span class="l">Sentiment</span><span class="v" id="sentVal" style="color:var(--amber);">Anxious · improving</span></div>
+              <div class="meter"><span id="sentBar" style="width:62%;background:linear-gradient(90deg,#f59e0b,#fbbf24);"></span></div>
 
-              <div class="metric" style="margin-top:14px;"><span class="l">Risk Level</span><span class="v" style="color:var(--green);">Low</span></div>
-              <div class="meter"><span style="width:24%;background:linear-gradient(90deg,#10b981,#34d399);"></span></div>
+              <div class="metric" style="margin-top:14px;"><span class="l">Risk Level</span><span class="v" id="riskVal" style="color:var(--green);">Low</span></div>
+              <div class="meter"><span id="riskBar" style="width:24%;background:linear-gradient(90deg,#10b981,#34d399);"></span></div>
 
               <div style="margin-top:14px;"><span class="l" style="font-size:11px;color:var(--navy-300);display:block;margin-bottom:6px;">Detected entities</span>
                 <div class="tag-row">
@@ -723,7 +730,7 @@ Senior Advisor, Sterling Insurance Group</div>
         setInterval(updateTimer, 1000);
       })();
 
-      // AI Assistant task feed — reveal one completed task every 2 seconds
+      // AI Assistant task feed — reveal one completed task every 2 seconds, then loop
       (function () {
         var items = document.querySelectorAll('#aiTaskList .ai-task');
         var countEl = document.getElementById('aiTaskCount');
@@ -732,25 +739,77 @@ Senior Advisor, Sterling Insurance Group</div>
         var total = items.length;
         var i = 0;
 
+        function setWorking() {
+          pillEl.textContent = 'Working…';
+          pillEl.style.background = 'rgba(59,130,246,0.15)';
+          pillEl.style.color = 'var(--blue-light)';
+        }
+
+        function resetCycle() {
+          // Fade everything out, then start the sequence again
+          for (var k = 0; k < total; k++) items[k].classList.remove('show');
+          i = 0;
+          countEl.textContent = '0';
+          barEl.style.width = '0%';
+          setWorking();
+          setTimeout(revealNext, 1200);
+        }
+
         function revealNext() {
           if (i >= total) {
             pillEl.textContent = 'Complete';
             pillEl.style.background = 'rgba(16,185,129,0.15)';
             pillEl.style.color = 'var(--green)';
+            setTimeout(resetCycle, 3500); // hold on "Complete", then loop
             return;
           }
           items[i].classList.add('show');
           i++;
           countEl.textContent = i;
           barEl.style.width = Math.round((i / total) * 100) + '%';
-          if (i < total) {
-            setTimeout(revealNext, 2000);
-          } else {
-            setTimeout(revealNext, 400);
-          }
+          setTimeout(revealNext, i < total ? 2000 : 600);
         }
 
         setTimeout(revealNext, 600);
+      })();
+
+      // Live Analysis — gently drift the confidence / sentiment / risk meters on a loop
+      (function () {
+        var states = [
+          { conf: 94, confTxt: '94%', sent: 62, sentTxt: 'Anxious · improving', sentCol: 'var(--amber)', risk: 24, riskTxt: 'Low', riskCol: 'var(--green)' },
+          { conf: 96, confTxt: '96%', sent: 71, sentTxt: 'Calmer · reassured', sentCol: 'var(--teal-300)', risk: 19, riskTxt: 'Low', riskCol: 'var(--green)' },
+          { conf: 91, confTxt: '91%', sent: 55, sentTxt: 'Concerned · stable', sentCol: 'var(--amber)', risk: 34, riskTxt: 'Low–Moderate', riskCol: 'var(--amber)' },
+          { conf: 98, confTxt: '98%', sent: 80, sentTxt: 'Positive · satisfied', sentCol: 'var(--teal-300)', risk: 15, riskTxt: 'Low', riskCol: 'var(--green)' }
+        ];
+        var confBar = document.getElementById('confBar');
+        var confVal = document.getElementById('confVal');
+        var sentBar = document.getElementById('sentBar');
+        var sentVal = document.getElementById('sentVal');
+        var riskBar = document.getElementById('riskBar');
+        var riskVal = document.getElementById('riskVal');
+        var idx = 0;
+
+        function fadeSwap(el, text, colour) {
+          el.style.opacity = '0';
+          setTimeout(function () {
+            el.textContent = text;
+            if (colour) el.style.color = colour;
+            el.style.opacity = '1';
+          }, 450);
+        }
+
+        function applyState() {
+          idx = (idx + 1) % states.length;
+          var s = states[idx];
+          confBar.style.width = s.conf + '%';
+          sentBar.style.width = s.sent + '%';
+          riskBar.style.width = s.risk + '%';
+          fadeSwap(confVal, s.confTxt);
+          fadeSwap(sentVal, s.sentTxt, s.sentCol);
+          fadeSwap(riskVal, s.riskTxt, s.riskCol);
+        }
+
+        setInterval(applyState, 4000);
       })();
 
       // Composer appends advisor notes to the transcript
@@ -774,6 +833,44 @@ Senior Advisor, Sterling Insurance Group</div>
         input.value = '';
         transcript.scrollTop = transcript.scrollHeight;
       });
+
+      // Live transcript — fade messages in one by one so the call appears to be unfolding, then loop
+      (function () {
+        var msgs = Array.prototype.slice.call(transcript.querySelectorAll('.msg'));
+        if (!msgs.length) return;
+
+        msgs.forEach(function (m) { m.classList.add('seq'); });
+
+        var j = 0;
+        var paused = false;
+
+        // Pause the loop while the advisor is typing a note, resume shortly after
+        input.addEventListener('focus', function () { paused = true; });
+        input.addEventListener('blur', function () { setTimeout(function () { paused = false; }, 1500); });
+
+        function showNext() {
+          if (paused) { setTimeout(showNext, 1500); return; }
+
+          if (j >= msgs.length) {
+            setTimeout(function () {
+              if (paused) { setTimeout(showNext, 1500); return; }
+              msgs.forEach(function (m) { m.classList.remove('shown'); });
+              transcript.scrollTop = 0;
+              j = 0;
+              setTimeout(showNext, 1000);
+            }, 4000); // hold the full conversation on screen before replaying
+            return;
+          }
+
+          msgs[j].classList.add('shown');
+          j++;
+          // keep the newest message in view
+          transcript.scrollTop = transcript.scrollHeight;
+          setTimeout(showNext, 2200);
+        }
+
+        setTimeout(showNext, 500);
+      })();
     </script>
   </body>
 </html>
