@@ -839,7 +839,8 @@ Senior Advisor, Sterling Insurance Group</div>
       (function () {
         var paused = false;
         var pos = 0;
-        var SPEED = 0.35; // pixels per frame — slow, cinematic drift
+        var SPEED = 0.75; // pixels per frame — steady, readable drift
+        var END_GAP = 8;  // restart this far from the bottom so no blank space is shown
 
         // Don't fight the user: pause on hover, manual scroll, or while typing a note
         transcript.addEventListener('mouseenter', function () { paused = true; });
@@ -859,13 +860,13 @@ Senior Advisor, Sterling Insurance Group</div>
 
           if (!paused && max > 4) {
             pos += SPEED;
-            if (pos >= max) {
-              // Reached the end — hold briefly, then glide back to the top
+            if (pos >= max - END_GAP) {
+              // Near the end — brief beat, then glide straight back to the top
               paused = true;
               setTimeout(function () {
                 transcript.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(function () { pos = 0; paused = false; }, 1200);
-              }, 2500);
+                setTimeout(function () { pos = 0; paused = false; }, 700);
+              }, 900);
             } else {
               transcript.scrollTop = pos;
             }
